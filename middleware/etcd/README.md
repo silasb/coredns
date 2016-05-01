@@ -60,3 +60,10 @@ This is the default SkyDNS setup, with everying specified in full:
     proxy . 8.8.8.8:53 8.8.4.4:53
 }
 ~~~
+
+~~~
+skydns.local:53 {
+    etcd {
+        local mylocalname.instance.skyns.local
+    }
+}

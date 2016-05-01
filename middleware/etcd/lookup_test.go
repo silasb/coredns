@@ -205,4 +205,9 @@ var dnsTestCases = []test.Case{
 		Qname: "local.dns.skydns.test.", Qtype: dns.TypeA,
 		Answer: []dns.RR{test.A("local.dns.skydns.test. 300 A 10.1.1.1")},
 	},
+	// Local data query
+	{
+		Qname: "notlocal.dns.skydns.test.", Qtype: dns.TypeA, Rcode: dns.RcodeNameError,
+		Ns: []dns.RR{test.SOA("skydns.test.	300	IN	SOA	ns.dns.skydns.test. hostmaster.skydns.test. 1460498836 14400 3600 604800 60")},
+	},
 }
