@@ -75,10 +75,10 @@ This is the default SkyDNS setup, with everying specified in full:
 
 ### Reverse zones
 
-Reverse zones are supported, but you need to make CoreDNS aware of the fact that you are also the
-reverse, for instance if you want to add the reverse for 10/24, you'll need to add the zone
-`10.in-addr.arpa` to the list of zones (the fun starts with reverse IPv6 zones in the ip6.arpa
-domain). Showing a snippet of a Corefile:
+Reverse zones are supported. You need to make CoreDNS aware of the fact that you are also
+authoritative for the reverse. For instance if you want to add the reverse for 10.0.0.0/24, you'll
+need to add the zone `10.in-addr.arpa` to the list of zones (the fun starts with reverse IPv6 zones
+in the ip6.arpa domain). Showing a snippet of a Corefile:
 
 ~~~
     etcd skydns.local 10.in-addr.arpa {
