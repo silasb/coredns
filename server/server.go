@@ -31,55 +31,29 @@ import (
 type Server struct {
 	Addr   string // Address we listen on
 	mux    *dns.ServeMux
-	server [2]*dns.Server // by convention 0 is tcp and 1 is udp
+	server *dns.Server
 
-	tcp        net.Listener
-	udp        net.PacketConn
+	l          net.Listener
 	listenerMu sync.Mutex // protects listener and packetconn
 
-	tls         bool // whether this server is serving all HTTPS hosts or not
-	TLSConfig   *tls.Config
-	OnDemandTLS bool             // whether this server supports on-demand TLS (load certs at handshake-time)
-	zones       map[string]zone  // zones keyed by their address
-	dnsWg       sync.WaitGroup   // used to wait on outstanding connections
-	startChan   chan struct{}    // used to block until server is finished starting
-	connTimeout time.Duration    // the maximum duration of a graceful shutdown
-	ReqCallback OptionalCallback // if non-nil, is executed at the beginning of every request
-	SNICallback func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error)
+	zones       map[string]zone // zones keyed by their address
+	dnsWg       sync.WaitGroup  // used to wait on outstanding connections
+	startChan   chan struct{}   // used to block until server is finished starting
+	connTimeout time.Duration   // the maximum duration of a graceful shutdown
 }
 
-// OptionalCallback is a function that may or may not handle a request.
-// It returns whether or not it handled the request. If it handled the
-// request, it is presumed that no further request handling should occur.
-type OptionalCallback func(dns.ResponseWriter, *dns.Msg) bool
-
-// New creates a new Server which will bind to addr and serve
-// the sites/hosts configured in configs. Its listener will
-// gracefully close when the server is stopped which will take
-// no longer than gracefulTimeout.
-//
-// This function does not start serving.
-//
 // Do not re-use a server (start, stop, then start again). We
 // could probably add more locking to make this possible, but
 // as it stands, you should dispose of a server after stopping it.
 // The behavior of serving with a spent server is undefined.
 func New(addr string, configs []Config, gracefulTimeout time.Duration) (*Server, error) {
-	var useTLS, useOnDemandTLS bool
-	if len(configs) > 0 {
-		useTLS = configs[0].TLS.Enabled
-		useOnDemandTLS = configs[0].TLS.OnDemand
-	}
 
 	s := &Server{
-		Addr:      addr,
-		TLSConfig: new(tls.Config),
+		Addr: addr,
 		// TODO: Make these values configurable?
 		// ReadTimeout:    2 * time.Minute,
 		// WriteTimeout:   2 * time.Minute,
 		// MaxHeaderBytes: 1 << 16,
-		tls:         useTLS,
-		OnDemandTLS: useOnDemandTLS,
 		zones:       make(map[string]zone),
 		startChan:   make(chan struct{}),
 		connTimeout: gracefulTimeout,
@@ -140,7 +114,9 @@ func (s *Server) LocalAddr() (net.Addr, net.Addr) {
 }
 
 // Serve starts the server with an existing listener. It blocks until the server stops.
-func (s *Server) Serve(ln net.Listener, pc net.PacketConn) error {
+// It will check the type of the Listener, if it is an packet oriented underlaying type, we assume
+// UDP.
+func (s *Server) Serve(l net.Listener) error {
 	err := s.setup()
 	if err != nil {
 		close(s.startChan) // MUST defer so error is properly reported, same with all cases in this file
@@ -193,52 +169,6 @@ func (s *Server) ListenAndServe() error {
 	close(s.startChan)
 	return s.server[1].ActivateAndServe()
 }
-
-// setup prepares the server s to begin listening; it should be
-// called just before the listener announces itself on the network
-// and should only be called when the server is just starting up.
-func (s *Server) setup() error {
-	// Execute startup functions now
-	for _, z := range s.zones {
-		for _, startupFunc := range z.config.Startup {
-			err := startupFunc()
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-/*
-TODO(miek): no such thing in the glorious Go DNS.
-// serveTLS serves TLS with SNI and client auth support if s has them enabled. It
-// blocks until s quits.
-func serveTLS(s *Server, ln net.Listener, tlsConfigs []TLSConfig) error {
-	// Customize our TLS configuration
-	s.TLSConfig.MinVersion = tlsConfigs[0].ProtocolMinVersion
-	s.TLSConfig.MaxVersion = tlsConfigs[0].ProtocolMaxVersion
-	s.TLSConfig.CipherSuites = tlsConfigs[0].Ciphers
-	s.TLSConfig.PreferServerCipherSuites = tlsConfigs[0].PreferServerCipherSuites
-
-	// TLS client authentication, if user enabled it
-	err := setupClientAuth(tlsConfigs, s.TLSConfig)
-	if err != nil {
-		defer close(s.startChan)
-		return err
-	}
-
-	// Create TLS listener - note that we do not replace s.listener
-	// with this TLS listener; tls.listener is unexported and does
-	// not implement the File() method we need for graceful restarts
-	// on POSIX systems.
-	ln = tls.NewListener(ln, s.TLSConfig)
-
-	close(s.startChan) // unblock anyone waiting for this to start listening
-	return s.Serve(ln)
-}
-*/
 
 // Stop stops the server. It blocks until the server is
 // totally stopped. On POSIX systems, it will wait for

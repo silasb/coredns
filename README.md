@@ -1,11 +1,10 @@
 # CoreDNS
 
-CoreDNS is DNS server that started as a fork of [Caddy](https://github.com/mholt/caddy/). It has the
-same model: it chains middleware.
+CoreDNS is a DNS server plugin for [Caddy](https://github.com/mholt/caddy/).
 
 CoreDNS is the successor of [SkyDNS](https://github.com/skynetservices/skydns). SkyDNS is a thin
 layer that exposes services in etcd in the DNS. CoreDNS builds on this idea and is a generic DNS
-server that can talk to multiple backends (etcd, consul, kubernetes, etc.).
+server that can also talk to multiple backends (etcd, consul, kubernetes, etc.).
 
 CoreDNS aims to be a fast and flexible DNS server. The keyword here is *flexible*, with CoreDNS you
 are able to do what you want with your DNS data. And if not: write a middleware!
@@ -32,12 +31,12 @@ Currently CoreDNS is able to:
 ## Status
 
 I'm using CoreDNS is my primary, authoritative, nameserver for my domains (`miek.nl`, `atoom.net`
-and a few others). CoreDNS should be stable enough to provide you with a good DNS(SEC) service.
+and a few others). CoreDNS is stable enough to provide you with a good DNS(SEC) service.
 
 There are still few [issues](https://github.com/miekg/coredns/issues), and work is ongoing on making
 things fast and reduce the memory usage.
 
-All in all, CoreDNS should be able to provide you with enough functionality to replace parts of
+All in all, CoreDNS is able to provide you with enough functionality to replace parts of
 BIND9, Knot, NSD or PowerDNS.
 Most documentation is in the source and some blog articles can be [found
 here](https://miek.nl/tags/coredns/). If you do want to use CoreDNS in production, please let us
