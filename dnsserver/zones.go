@@ -1,4 +1,4 @@
-package server
+package dnsserver
 
 import "github.com/miekg/coredns/middleware"
 

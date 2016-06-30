@@ -14,7 +14,7 @@ import (
 	"github.com/mholt/caddy/caddytls"
 )
 
-const serverType = "http"
+const serverType = "dns"
 
 func init() {
 	flag.StringVar(&Host, "host", DefaultHost, "Default host")
