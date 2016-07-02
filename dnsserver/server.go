@@ -1,13 +1,9 @@
 package dnsserver
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
-	"os"
 	"runtime"
 	"sync"
 	"time"
@@ -28,14 +24,14 @@ import (
 type Server struct {
 	Addr   string // Address we listen on
 	mux    *dns.ServeMux
-	server *dns.Server
+	server [2]*dns.Server // 0 is a net.Listener, 1 is a net.PacketConn (a *UDPConn) in our case.
 
-	l          net.Listener
-	listenerMu sync.Mutex // protects listener and packetconn
+	l net.Listener
+	p net.PacketConn
+	m sync.Mutex // protects listener and packetconn
 
 	zones       map[string]zone // zones keyed by their address
 	dnsWg       sync.WaitGroup  // used to wait on outstanding connections
-	startChan   chan struct{}   // used to block until server is finished starting
 	connTimeout time.Duration   // the maximum duration of a graceful shutdown
 }
 
@@ -46,13 +42,8 @@ type Server struct {
 func New(addr string, configs []Config, gracefulTimeout time.Duration) (*Server, error) {
 
 	s := &Server{
-		Addr: addr,
-		// TODO: Make these values configurable?
-		// ReadTimeout:    2 * time.Minute,
-		// WriteTimeout:   2 * time.Minute,
-		// MaxHeaderBytes: 1 << 16,
+		Addr:        addr,
 		zones:       make(map[string]zone),
-		startChan:   make(chan struct{}),
 		connTimeout: gracefulTimeout,
 	}
 	mux := dns.NewServeMux()
@@ -76,11 +67,7 @@ func New(addr string, configs []Config, gracefulTimeout time.Duration) (*Server,
 		z := zone{config: conf}
 
 		// Build middleware stack
-		err := z.buildStack()
-		if err != nil {
-			return nil, err
-		}
-
+		z.buildStack()
 		s.zones[conf.Host] = z
 
 		// A bit of a hack. Loop through the middlewares of this zone and check if
@@ -100,71 +87,65 @@ func New(addr string, configs []Config, gracefulTimeout time.Duration) (*Server,
 	return s, nil
 }
 
-// LocalAddr return the addresses where the server is bound to. The TCP listener
-// address is the first returned, the UDP conn address the second.
-func (s *Server) LocalAddr() (net.Addr, net.Addr) {
-	s.listenerMu.Lock()
+// LocalAddr return the addresses where the server is bound to.
+func (s *Server) LocalAddr() net.Addr {
+	s.m.Lock()
+	defer s.m.Unlock()
 	tcp := s.tcp.Addr()
+	return tcp
+}
+
+// LocalAddrPacket return the net.PacketConn address where the server is bound to.
+func (s *Server) LocalAddrPacket() net.Addr {
+	s.m.Lock()
+	defer s.m.Lock()
 	udp := s.udp.LocalAddr()
-	s.listenerMu.Unlock()
-	return tcp, udp
+	return udp
 }
 
 // Serve starts the server with an existing listener. It blocks until the server stops.
-// It will check the type of the Listener, if it is an packet oriented underlaying type, we assume
-// UDP.
 func (s *Server) Serve(l net.Listener) error {
-	err := s.setup()
+	s.m.Lock()
+	s.server[0] = &dns.Server{Listener: l, Net: "tcp", Handler: s.mux}
+	s.m.Unlock()
+
+	return s.server[0].ActivateAndServe()
+}
+
+// ServePacket starts the server with an existing packetconn. It blocks until the server stops.
+func (s *Server) ServePacket(p net.PacketConn) error {
 	if err != nil {
 		close(s.startChan) // MUST defer so error is properly reported, same with all cases in this file
 		return err
 	}
-	s.listenerMu.Lock()
-	s.server[0] = &dns.Server{Listener: ln, Net: "tcp", Handler: s.mux}
-	s.tcp = ln
-	s.server[1] = &dns.Server{PacketConn: pc, Net: "udp", Handler: s.mux}
-	s.udp = pc
-	s.listenerMu.Unlock()
+	s.m.Lock()
+	s.server[1] = &dns.Server{PacketConn: p, Net: "udp", Handler: s.mux}
+	s.m.Unlock()
 
-	go func() {
-		s.server[0].ActivateAndServe()
-	}()
-	close(s.startChan)
 	return s.server[1].ActivateAndServe()
 }
 
-// ListenAndServe starts the server with a new listener. It blocks until the server stops.
-func (s *Server) ListenAndServe() error {
-	err := s.setup()
-	// defer close(s.startChan) // Don't understand why defer wouldn't actually work in this method (prolly cause the last ActivateAndServe does not actually return?
-	if err != nil {
-		close(s.startChan)
-		return err
-	}
-
+func (s *Server) Listen() (net.Listener, error) {
 	l, err := net.Listen("tcp", s.Addr)
 	if err != nil {
-		close(s.startChan)
-		return err
+		return nil, err
 	}
-	pc, err := net.ListenPacket("udp", s.Addr)
+	s.listenerMu.Lock()
+	s.tcp = l
+	s.listenerMu.Unlock()
+	return l, nil
+}
+
+func (s *Server) ListenPacket() (net.PacketConn, error) {
+	p, err := net.ListenPacket("udp", s.Addr)
 	if err != nil {
-		close(s.startChan)
-		return err
+		return nil, err
 	}
 
 	s.listenerMu.Lock()
-	s.server[0] = &dns.Server{Listener: l, Net: "tcp", Handler: s.mux}
-	s.tcp = l
-	s.server[1] = &dns.Server{PacketConn: pc, Net: "udp", Handler: s.mux}
-	s.udp = pc
+	s.udp = p
 	s.listenerMu.Unlock()
-
-	go func() {
-		s.server[0].ActivateAndServe()
-	}()
-	close(s.startChan)
-	return s.server[1].ActivateAndServe()
+	return p, nil
 }
 
 // Stop stops the server. It blocks until the server is
@@ -204,41 +185,7 @@ func (s *Server) Stop() (err error) {
 		err = s1.Shutdown()
 	}
 	s.listenerMu.Unlock()
-
 	return
-}
-
-// WaitUntilStarted blocks until the server s is started, meaning
-// that practically the next instruction is to start the server loop.
-// It also unblocks if the server encounters an error during startup.
-func (s *Server) WaitUntilStarted() {
-	<-s.startChan
-}
-
-// ListenerFd gets a dup'ed file of the listener. If there
-// is no underlying file, the return value will be nil. It
-// is the caller's responsibility to close the file.
-func (s *Server) ListenerFd() *os.File {
-	s.listenerMu.Lock()
-	defer s.listenerMu.Unlock()
-	if s.tcp != nil {
-		file, _ := s.tcp.(*net.TCPListener).File()
-		return file
-	}
-	return nil
-}
-
-// PacketConnFd gets a dup'ed file of the packetconn. If there
-// is no underlying file, the return value will be nil. It
-// is the caller's responsibility to close the file.
-func (s *Server) PacketConnFd() *os.File {
-	s.listenerMu.Lock()
-	defer s.listenerMu.Unlock()
-	if s.udp != nil {
-		file, _ := s.udp.(*net.UDPConn).File()
-		return file
-	}
-	return nil
 }
 
 // ServeDNS is the entry point for every request to the address that s
@@ -260,11 +207,6 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 		metrics.Report(state, metrics.Dropped, rc, m.Len(), time.Now())
 		w.WriteMsg(m)
-		return
-	}
-
-	// Execute the optional request callback if it exists
-	if s.ReqCallback != nil && s.ReqCallback(w, r) {
 		return
 	}
 
@@ -323,91 +265,6 @@ func DefaultErrorFunc(w dns.ResponseWriter, r *dns.Msg, rcode int) {
 
 	metrics.Report(state, metrics.Dropped, rc, answer.Len(), time.Now())
 	w.WriteMsg(answer)
-}
-
-// setupClientAuth sets up TLS client authentication only if
-// any of the TLS configs specified at least one cert file.
-func setupClientAuth(tlsConfigs []TLSConfig, config *tls.Config) error {
-	var clientAuth bool
-	for _, cfg := range tlsConfigs {
-		if len(cfg.ClientCerts) > 0 {
-			clientAuth = true
-			break
-		}
-	}
-
-	if clientAuth {
-		pool := x509.NewCertPool()
-		for _, cfg := range tlsConfigs {
-			for _, caFile := range cfg.ClientCerts {
-				caCrt, err := ioutil.ReadFile(caFile) // Anyone that gets a cert from this CA can connect
-				if err != nil {
-					return err
-				}
-				if !pool.AppendCertsFromPEM(caCrt) {
-					return fmt.Errorf("error loading client certificate '%s': no certificates were successfully parsed", caFile)
-				}
-			}
-		}
-		config.ClientCAs = pool
-		config.ClientAuth = tls.RequireAndVerifyClientCert
-	}
-
-	return nil
-}
-
-// RunFirstStartupFuncs runs all of the server's FirstStartup
-// callback functions unless one of them returns an error first.
-// It is the caller's responsibility to call this only once and
-// at the correct time. The functions here should not be executed
-// at restarts or where the user does not explicitly start a new
-// instance of the server.
-func (s *Server) RunFirstStartupFuncs() error {
-	for _, z := range s.zones {
-		for _, f := range z.config.FirstStartup {
-			if err := f(); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// ShutdownCallbacks executes all the shutdown callbacks
-// for all the virtualhosts in servers, and returns all the
-// errors generated during their execution. In other words,
-// an error executing one shutdown callback does not stop
-// execution of others. Only one shutdown callback is executed
-// at a time. You must protect the servers that are passed in
-// if they are shared across threads.
-func ShutdownCallbacks(servers []*Server) []error {
-	var errs []error
-	for _, s := range servers {
-		for _, zone := range s.zones {
-			for _, shutdownFunc := range zone.config.Shutdown {
-				err := shutdownFunc()
-				if err != nil {
-					errs = append(errs, err)
-				}
-			}
-		}
-	}
-	return errs
-}
-
-func StartupCallbacks(servers []*Server) []error {
-	var errs []error
-	for _, s := range servers {
-		for _, zone := range s.zones {
-			for _, startupFunc := range zone.config.Startup {
-				err := startupFunc()
-				if err != nil {
-					errs = append(errs, err)
-				}
-			}
-		}
-	}
-	return errs
 }
 
 func RcodeNoClientWrite(rcode int) bool {

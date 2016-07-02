@@ -1,4 +1,4 @@
-package server
+package dnsserver
 
 import "github.com/miekg/coredns/middleware"
 
@@ -11,13 +11,8 @@ type zone struct {
 	stack  middleware.Handler
 }
 
-// buildStack builds the server's middleware stack based
-// on its config. This method should be called last before
-// ListenAndServe begins.
-func (z *zone) buildStack() error {
-	z.compile(z.config.Middleware)
-	return nil
-}
+// buildStack builds the server's middleware stack based on its config.
+func (z *zone) buildStack() { z.compile(z.config.Middleware) }
 
 // compile is an elegant alternative to nesting middleware function
 // calls like handler1(handler2(handler3(finalHandler))).
