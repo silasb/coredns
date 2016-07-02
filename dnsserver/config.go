@@ -8,11 +8,12 @@ import (
 
 // Config configuration for a single server.
 type Config struct {
-	// The hostname or IP on which to serve.
-	Host string
+	// The address of the site.
+	Addr string
 
-	// The host address to bind on - defaults to Host if empty.
-	BindHost string
+	// The hostname to bind listener to;
+	// defaults to Addr.Host.
+	ListenHost string
 
 	// The port to listen on.
 	Port string
@@ -29,5 +30,5 @@ type Config struct {
 
 // Address returns the host:port of c as a string.
 func (c Config) Address() string {
-	return net.JoinHostPort(c.Host, c.Port)
+	return net.JoinHostPort(c.Addr, c.Port)
 }

@@ -35,6 +35,11 @@ type Server struct {
 	connTimeout time.Duration   // the maximum duration of a graceful shutdown
 }
 
+const (
+	tcp = 0
+	udp = 1
+)
+
 // Do not re-use a server (start, stop, then start again). We
 // could probably add more locking to make this possible, but
 // as it stands, you should dispose of a server after stopping it.
@@ -91,25 +96,23 @@ func New(addr string, configs []Config, gracefulTimeout time.Duration) (*Server,
 func (s *Server) LocalAddr() net.Addr {
 	s.m.Lock()
 	defer s.m.Unlock()
-	tcp := s.tcp.Addr()
-	return tcp
+	return s.tcp.Addr()
 }
 
 // LocalAddrPacket return the net.PacketConn address where the server is bound to.
 func (s *Server) LocalAddrPacket() net.Addr {
 	s.m.Lock()
 	defer s.m.Lock()
-	udp := s.udp.LocalAddr()
-	return udp
+	return s.udp.LocalAddr()
 }
 
 // Serve starts the server with an existing listener. It blocks until the server stops.
 func (s *Server) Serve(l net.Listener) error {
 	s.m.Lock()
-	s.server[0] = &dns.Server{Listener: l, Net: "tcp", Handler: s.mux}
+	s.server[tcp] = &dns.Server{Listener: l, Net: "tcp", Handler: s.mux}
 	s.m.Unlock()
 
-	return s.server[0].ActivateAndServe()
+	return s.server[tcp].ActivateAndServe()
 }
 
 // ServePacket starts the server with an existing packetconn. It blocks until the server stops.
@@ -119,10 +122,10 @@ func (s *Server) ServePacket(p net.PacketConn) error {
 		return err
 	}
 	s.m.Lock()
-	s.server[1] = &dns.Server{PacketConn: p, Net: "udp", Handler: s.mux}
+	s.server[udp] = &dns.Server{PacketConn: p, Net: "udp", Handler: s.mux}
 	s.m.Unlock()
 
-	return s.server[1].ActivateAndServe()
+	return s.server[udp].ActivateAndServe()
 }
 
 func (s *Server) Listen() (net.Listener, error) {

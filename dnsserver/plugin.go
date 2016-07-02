@@ -43,39 +43,37 @@ func init() {
 		NewContext: newContext,
 	})
 	caddy.RegisterCaddyfileLoader("short", caddy.LoaderFunc(shortCaddyfileLoader))
-	caddy.RegisterParsingCallback(serverType, "tls", activateHTTPS)
-	caddytls.RegisterConfigGetter(serverType, func(c *caddy.Controller) *caddytls.Config { return GetConfig(c).TLS })
 }
 
 func newContext() caddy.Context {
-	return &httpContext{keysToSiteConfigs: make(map[string]*SiteConfig)}
+	return &dnsContext{keysToConfigs: make(map[string]*Config)}
 }
 
 type dnsContext struct {
-	// keysToSiteConfigs maps an address at the top of a
-	// server block (a "key") to its SiteConfig. Not all
-	// SiteConfigs will be represented here, only ones
+	// keysToConfigs maps an address at the top of a
+	// server block (a "key") to its Config. Not all
+	// Configs will be represented here, only ones
 	// that appeared in the Caddyfile.
-	keysToSiteConfigs map[string]*SiteConfig
+	keysToConfigs map[string]*Config
 
 	// siteConfigs is the master list of all site configs.
-	siteConfigs []*SiteConfig
+	configs []*Config
 }
 
-func (h *httpContext) saveConfig(key string, cfg *SiteConfig) {
-	h.siteConfigs = append(h.siteConfigs, cfg)
-	h.keysToSiteConfigs[key] = cfg
+func (h *dnsContext) saveConfig(key string, cfg *Config) {
+	h.configs = append(h.configs, cfg)
+	h.keysToConfigs[key] = cfg
 }
 
 // InspectServerBlocks make sure that everything checks out before
 // executing directives and otherwise prepares the directives to
 // be parsed and executed.
-func (h *httpContext) InspectServerBlocks(sourceFile string, serverBlocks []caddyfile.ServerBlock) ([]caddyfile.ServerBlock, error) {
+func (h *dnsContext) InspectServerBlocks(sourceFile string, serverBlocks []caddyfile.ServerBlock) ([]caddyfile.ServerBlock, error) {
 	// For each address in each server block, make a new config
 	for _, sb := range serverBlocks {
 		for _, key := range sb.Keys {
 			key = strings.ToLower(key)
-			if _, dup := h.keysToSiteConfigs[key]; dup {
+			if _, dup := h.keysToConfigs[key]; dup {
 				return serverBlocks, fmt.Errorf("duplicate site address: %s", key)
 			}
 			addr, err := standardizeAddress(key)
@@ -93,11 +91,9 @@ func (h *httpContext) InspectServerBlocks(sourceFile string, serverBlocks []cadd
 			}
 
 			// Save the config to our master list, and key it for lookups
-			cfg := &SiteConfig{
-				Addr:        addr,
-				Root:        Root,
-				TLS:         &caddytls.Config{Hostname: addr.Host},
-				HiddenFiles: []string{sourceFile},
+			cfg := &Config{
+				Addr: addr,
+				Root: Root,
 			}
 			h.saveConfig(key, cfg)
 		}
@@ -120,10 +116,8 @@ func (h *httpContext) InspectServerBlocks(sourceFile string, serverBlocks []cadd
 
 // MakeServers uses the newly-created siteConfigs to
 // create and return a list of server instances.
-func (h *httpContext) MakeServers() ([]caddy.Server, error) {
-	// make sure TLS is disabled for explicitly-HTTP sites
-	// (necessary when HTTP address shares a block containing tls)
-	for _, cfg := range h.siteConfigs {
+func (h *dnsContext) MakeServers() ([]caddy.Server, error) {
+	for _, cfg := range h.configs {
 		if !cfg.TLS.Enabled {
 			continue
 		}
@@ -165,10 +159,10 @@ func (h *httpContext) MakeServers() ([]caddy.Server, error) {
 	return servers, nil
 }
 
-// GetConfig gets the SiteConfig that corresponds to c.
+// GetConfig gets the Config that corresponds to c.
 // If none exist (should only happen in tests), then a
 // new, empty one will be created.
-func GetConfig(c *caddy.Controller) *SiteConfig {
+func GetConfig(c *caddy.Controller) *Config {
 	ctx := c.Context().(*httpContext)
 	if cfg, ok := ctx.keysToSiteConfigs[c.Key]; ok {
 		return cfg
@@ -202,8 +196,8 @@ func shortCaddyfileLoader(serverType string) (caddy.Input, error) {
 // on the same server instance. The return value maps the listen
 // address (what you pass into net.Listen) to the list of site configs.
 // This function does NOT vet the configs to ensure they are compatible.
-func groupSiteConfigsByListenAddr(configs []*SiteConfig) (map[string][]*SiteConfig, error) {
-	groups := make(map[string][]*SiteConfig)
+func groupSiteConfigsByListenAddr(configs []*Config) (map[string][]*Config, error) {
+	groups := make(map[string][]*Config)
 
 	for _, conf := range configs {
 		if caddy.IsLoopback(conf.Addr.Host) && conf.ListenHost == "" {
@@ -226,7 +220,7 @@ func groupSiteConfigsByListenAddr(configs []*SiteConfig) (map[string][]*SiteConf
 }
 
 // AddMiddleware adds a middleware to a site's middleware stack.
-func (sc *SiteConfig) AddMiddleware(m Middleware) {
+func (sc *Config) AddMiddleware(m Middleware) {
 	sc.middleware = append(sc.middleware, m)
 }
 
