@@ -77,6 +77,9 @@ func (p Proxy) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 		// hosts until timeout (or until we get a nil host).
 		for time.Now().Sub(start) < tryDuration {
 			host := upstream.Select()
+
+			// We will never return nil, but leave this code as-is, because maybe we will
+			// allow Spraying to be disabled in the future.
 			if host == nil {
 				return dns.RcodeServerFailure, errUnreachable
 			}
