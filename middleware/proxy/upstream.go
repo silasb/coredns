@@ -51,7 +51,7 @@ func NewStaticUpstreams(c parse.Dispenser) ([]Upstream, error) {
 			Policy:      &Random{},
 			Spray:       nil,
 			FailTimeout: 10 * time.Second,
-			MaxFails:    0,
+			MaxFails:    1,
 		}
 
 		if !c.Args(&upstream.from) {
