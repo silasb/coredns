@@ -77,8 +77,8 @@ func (e Etcd) A(zone string, state middleware.State, previousRecords []dns.RR, o
 				if opt.Debug != "" {
 					debugTxt := errorToTxt(errors.New(target + " IN " + state.Type() + ":" + e1.Error()))
 					records = append(records, debugTxt)
-					continue
 				}
+				continue
 			}
 			// Len(m1.Answer) > 0 here is well?
 			records = append(records, newRecord)
