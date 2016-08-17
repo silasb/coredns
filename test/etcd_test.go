@@ -35,7 +35,7 @@ func TestEtcdStubForwarding(t *testing.T) {
 	// TODO(miek)
 }
 
-func TestEtcdStubAndProxyLookup(t *testing.T) {
+func testEtcdStubAndProxyLookup(t *testing.T) {
 	corefile := `.:0 {
     etcd skydns.local {
         stubzones
@@ -47,11 +47,12 @@ func TestEtcdStubAndProxyLookup(t *testing.T) {
 }`
 
 	etc := etcdMiddleware()
-	ex, _, udp, err := Server(t, corefile)
+	ex, err := CoreDNSServer(corefile)
 	if err != nil {
 		t.Fatalf("Could get server: %s", err)
 	}
-	defer ex.Stop()
+	_, udp := StartCoreDNSServer(ex[0])
+	defer StopCoreDNSServer(ex[0])
 
 	log.SetOutput(ioutil.Discard)
 

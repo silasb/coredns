@@ -11,7 +11,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-func TestLookupBalanceRewriteCacheDnssec(t *testing.T) {
+func testLookupBalanceRewriteCacheDnssec(t *testing.T) {
 	name, rm, err := test.TempFile(t, ".", exampleOrg)
 	if err != nil {
 		t.Fatalf("failed to created zone: %s", err)
@@ -29,12 +29,13 @@ func TestLookupBalanceRewriteCacheDnssec(t *testing.T) {
     loadbalance
 }
 `
-	ex, _, udp, err := Server(t, corefile)
+	ex, err := CoreDNSServer(corefile)
 	if err != nil {
 		t.Errorf("Could get server to start: %s", err)
 		return
 	}
-	defer ex.Stop()
+	_, udp := StartCoreDNSServer(ex[0])
+	defer StopCoreDNSServer(ex[0])
 
 	log.SetOutput(ioutil.Discard)
 	c := new(dns.Client)

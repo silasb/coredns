@@ -7,26 +7,30 @@ import (
 )
 
 // Start 2 tests server, server A will proxy to B, server B is an CH server.
-func TestProxyToChaosServer(t *testing.T) {
+func testProxyToChaosServer(t *testing.T) {
 	corefile := `.:0 {
 	chaos CoreDNS-001 miek@miek.nl
 }
 `
-	chaos, tcpCH, udpCH, err := Server(t, corefile)
+	chaos, err := CoreDNSServer(corefile)
 	if err != nil {
 		t.Fatalf("Could get server: %s", err)
 	}
-	defer chaos.Stop()
+
+	tcpCH, udpCH := StartCoreDNSServer(chaos[0])
+	defer StopCoreDNSServer(chaos[0])
 
 	corefileProxy := `.:0 {
 		proxy . ` + udpCH + `
 }
 `
-	proxy, _, udp, err := Server(t, corefileProxy)
+	proxy, err := CoreDNSServer(corefileProxy)
 	if err != nil {
 		t.Fatalf("Could get server: %s", err)
 	}
-	defer proxy.Stop()
+
+	_, udp := StartCoreDNSServer(proxy[0])
+	defer StartCoreDNSServer(proxy[0])
 
 	chaosTest(t, udpCH, "udp")
 	chaosTest(t, tcpCH, "tcp")

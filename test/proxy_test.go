@@ -20,7 +20,7 @@ example.org.		IN	A	127.0.0.1
 example.org.		IN	A	127.0.0.2
 `
 
-func TestLookupProxy(t *testing.T) {
+func testLookupProxy(t *testing.T) {
 	name, rm, err := test.TempFile(t, ".", exampleOrg)
 	if err != nil {
 		t.Fatalf("failed to created zone: %s", err)
@@ -31,11 +31,12 @@ func TestLookupProxy(t *testing.T) {
 	file ` + name + `
 }
 `
-	ex, _, udp, err := Server(t, corefile)
+	ex, err := CoreDNSServer(corefile)
 	if err != nil {
 		t.Fatalf("Could get server: %s", err)
 	}
-	defer ex.Stop()
+	_, udp := StartCoreDNSServer(ex[0])
+	defer StopCoreDNSServer(ex[0])
 
 	log.SetOutput(ioutil.Discard)
 
@@ -43,8 +44,7 @@ func TestLookupProxy(t *testing.T) {
 	state := middleware.State{W: &test.ResponseWriter{}, Req: new(dns.Msg)}
 	resp, err := p.Lookup(state, "example.org.", dns.TypeA)
 	if err != nil {
-		t.Error("Expected to receive reply, but didn't")
-		return
+		t.Fatal("Expected to receive reply, but didn't")
 	}
 	// expect answer section with A record in it
 	if len(resp.Answer) == 0 {
