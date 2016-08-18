@@ -54,13 +54,10 @@ dependencies:
 
     go get ./...
 
-Then, execute `go generate`, this will patch Caddy to add CoreDNS and then run Caddy's `build.bash`
-to build `caddy`. This exectuble is then copied to the current directory as `coredns`. Thus:
+Then, execute `go generate`, this will patch Caddy to add CoreDNS.
 
     go generate
-    go build # won't build anything
-
-You build `coredns` by running `go generate`. Yes.
+    go build
 
 ## Examples
 
