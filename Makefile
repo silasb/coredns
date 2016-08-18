@@ -8,7 +8,7 @@ DOCKER_IMAGE_NAME := $$USER/coredns
 
 all:
 	go generate
-	go build $(BUILD_VERBOSE) -ldflags="-s -w
+	go build $(BUILD_VERBOSE) -ldflags="-s -w"
 
 .PHONY: docker
 docker: all
