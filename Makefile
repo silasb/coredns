@@ -6,12 +6,10 @@ TEST_VERBOSE := -v
 
 DOCKER_IMAGE_NAME := $$USER/coredns
 
-
 all:
 	go generate
+	GOOS=linux go build -a -tags netgo -installsuffix netgo -ldflags="-s -w"
 
-# TODO(miek)
-# TODO(miek): static caddy binary?
 .PHONY: docker
 docker: all
 	GOOS=linux go build -a -tags netgo -installsuffix netgo -ldflags="-s -w"
