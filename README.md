@@ -60,6 +60,8 @@ to build `caddy`. This exectuble is then copied to the current directory as `cor
     go generate
     go build # won't build anything
 
+You build `coredns` by running `go generate`. Yes.
+
 ## Examples
 
 Start a simple proxy:

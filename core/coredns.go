@@ -10,6 +10,7 @@ import (
 	_ "github.com/miekg/coredns/middleware/pprof"
 
 	_ "github.com/miekg/coredns/middleware/errors"
+	_ "github.com/miekg/coredns/middleware/loadbalance"
 	_ "github.com/miekg/coredns/middleware/log"
 	_ "github.com/miekg/coredns/middleware/metrics"
 	_ "github.com/miekg/coredns/middleware/rewrite"
@@ -21,4 +22,5 @@ import (
 	_ "github.com/miekg/coredns/middleware/file"
 	_ "github.com/miekg/coredns/middleware/kubernetes"
 	_ "github.com/miekg/coredns/middleware/proxy"
+	_ "github.com/miekg/coredns/middleware/secondary"
 )

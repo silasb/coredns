@@ -67,7 +67,7 @@ func etcdParse(c *caddy.Controller) (*Etcd, bool, error) {
 			etc.Client = client
 			etc.Zones = c.RemainingArgs()
 			if len(etc.Zones) == 0 {
-				etc.Zones = c.ServerBlockKeys
+				copy(etc.Zones, c.ServerBlockKeys)
 			}
 			middleware.Zones(etc.Zones).FullyQualify()
 			if c.NextBlock() {

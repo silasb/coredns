@@ -22,14 +22,14 @@ func setup(c *caddy.Controller) error {
 		return err
 	}
 
-	metricsOnce.Do(func() {
-		c.OnStartup(m.Startup)
-		c.OnShutdown(m.Shutdown)
-	})
-
 	dnsserver.GetConfig(c).AddMiddleware(func(next dnsserver.Handler) dnsserver.Handler {
 		m.Next = next
 		return m
+	})
+
+	metricsOnce.Do(func() {
+		c.OnStartup(m.Startup)
+		c.OnShutdown(m.Shutdown)
 	})
 
 	return nil
@@ -45,7 +45,7 @@ func prometheusParse(c *caddy.Controller) (Metrics, error) {
 		if len(met.ZoneNames) > 0 {
 			return Metrics{}, c.Err("metrics: can only have one metrics module per server")
 		}
-		met = Metrics{ZoneNames: c.ServerBlockKeys}
+		copy(met.ZoneNames, c.ServerBlockKeys)
 		for i, _ := range met.ZoneNames {
 			met.ZoneNames[i] = middleware.Host(met.ZoneNames[i]).Normalize()
 		}

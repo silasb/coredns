@@ -58,7 +58,7 @@ func (h *dnsContext) InspectServerBlocks(sourceFile string, serverBlocks []caddy
 	dups := map[string]string{}
 	for _, s := range serverBlocks {
 		for i, k := range s.Keys {
-			za, err := standardZone(k)
+			za, err := normalizeZone(k)
 			if err != nil {
 				return nil, err
 			}

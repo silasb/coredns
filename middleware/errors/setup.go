@@ -5,11 +5,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/mholt/caddy"
 	"github.com/miekg/coredns/core/dnsserver"
 	"github.com/miekg/coredns/middleware"
 
 	"github.com/hashicorp/go-syslog"
+	"github.com/mholt/caddy"
 )
 
 func init() {

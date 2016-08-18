@@ -31,14 +31,15 @@ func setup(c *caddy.Controller) error {
 
 func cacheParse(c *caddy.Controller) (int, []string, error) {
 	var (
-		err error
-		ttl int
+		err     error
+		ttl     int
+		origins []string
 	)
 
 	for c.Next() {
 		if c.Val() == "cache" {
 			// cache [ttl] [zones..]
-			origins := c.ServerBlockKeys // TODO(miek): are these actually well formed? I.e. does this work at all!?
+			copy(origins, c.ServerBlockKeys)
 			args := c.RemainingArgs()
 			if len(args) > 0 {
 				origins = args
@@ -49,7 +50,7 @@ func cacheParse(c *caddy.Controller) (int, []string, error) {
 					origins = origins[1:]
 					if len(origins) == 0 {
 						// There was *only* the ttl, revert back to server block
-						origins = c.ServerBlockKeys
+						copy(origins, c.ServerBlockKeys)
 					}
 				}
 			}

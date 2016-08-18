@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -53,8 +52,7 @@ func kubernetesParse(c *caddy.Controller) (Kubernetes, error) {
 			zones := c.RemainingArgs()
 
 			if len(zones) == 0 {
-				k8s.Zones = c.ServerBlockKeys
-				log.Printf("[debug] Zones(from ServerBlockHosts): %v", zones)
+				copy(k8s.Zones, c.ServerBlockKeys)
 			} else {
 				// Normalize requested zones
 				k8s.Zones = NormalizeZoneList(zones)
@@ -63,7 +61,6 @@ func kubernetesParse(c *caddy.Controller) (Kubernetes, error) {
 			middleware.Zones(k8s.Zones).FullyQualify()
 			if k8s.Zones == nil || len(k8s.Zones) < 1 {
 				err = errors.New("Zone name must be provided for kubernetes middleware.")
-				log.Printf("[debug] %v\n", err)
 				return Kubernetes{}, err
 			}
 
@@ -78,7 +75,6 @@ func kubernetesParse(c *caddy.Controller) (Kubernetes, error) {
 							return Kubernetes{}, err
 						}
 					} else {
-						log.Printf("[debug] 'template' keyword provided without any template value.")
 						return Kubernetes{}, c.ArgErr()
 					}
 				case "namespaces":
@@ -86,7 +82,6 @@ func kubernetesParse(c *caddy.Controller) (Kubernetes, error) {
 					if len(args) != 0 {
 						k8s.Namespaces = append(k8s.Namespaces, args...)
 					} else {
-						log.Printf("[debug] 'namespaces' keyword provided without any namespace values.")
 						return Kubernetes{}, c.ArgErr()
 					}
 				case "endpoint":
@@ -94,7 +89,6 @@ func kubernetesParse(c *caddy.Controller) (Kubernetes, error) {
 					if len(args) != 0 {
 						k8s.APIEndpoint = args[0]
 					} else {
-						log.Printf("[debug] 'endpoint' keyword provided without any endpoint url value.")
 						return Kubernetes{}, c.ArgErr()
 					}
 				case "resyncperiod":
@@ -106,7 +100,6 @@ func kubernetesParse(c *caddy.Controller) (Kubernetes, error) {
 							return Kubernetes{}, err
 						}
 					} else {
-						log.Printf("[debug] 'resyncperiod' keyword provided without any duration value.")
 						return Kubernetes{}, c.ArgErr()
 					}
 				case "labels":
@@ -119,7 +112,6 @@ func kubernetesParse(c *caddy.Controller) (Kubernetes, error) {
 							return Kubernetes{}, err
 						}
 					} else {
-						log.Printf("[debug] 'labels' keyword provided without any selector value.")
 						return Kubernetes{}, c.ArgErr()
 					}
 				}

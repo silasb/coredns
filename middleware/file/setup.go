@@ -47,6 +47,8 @@ func setup(c *caddy.Controller) error {
 func fileParse(c *caddy.Controller) (Zones, error) {
 	z := make(map[string]*Zone)
 	names := []string{}
+	origins := []string{}
+
 	for c.Next() {
 		if c.Val() == "file" {
 			// file db.file [zones...]
@@ -55,7 +57,7 @@ func fileParse(c *caddy.Controller) (Zones, error) {
 			}
 			fileName := c.Val()
 
-			origins := c.ServerBlockKeys
+			copy(origins, c.ServerBlockKeys)
 			args := c.RemainingArgs()
 			if len(args) > 0 {
 				origins = args

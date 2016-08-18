@@ -36,7 +36,7 @@ func dnssecParse(c *caddy.Controller) ([]string, []*DNSKEY, error) {
 	for c.Next() {
 		if c.Val() == "dnssec" {
 			// dnssec [zones...]
-			zones = c.ServerBlockKeys
+			copy(zones, c.ServerBlockKeys)
 			args := c.RemainingArgs()
 			if len(args) > 0 {
 				zones = args

@@ -16,9 +16,9 @@ type zoneAddr struct {
 // String return z.Zone + ":" + z.Port as a string.
 func (z zoneAddr) String() string { return z.Zone + ":" + z.Port }
 
-// standardZone parses an zone string into a structured format with separate
+// normalizeZone parses an zone string into a structured format with separate
 // host, and port portions, as well as the original input string.
-func standardZone(str string) (zoneAddr, error) {
+func normalizeZone(str string) (zoneAddr, error) {
 	var err error
 
 	// separate host and port

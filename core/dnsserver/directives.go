@@ -10,11 +10,11 @@ package dnsserver
 // (after) them during a request, but they must not
 // care what middleware above them are doing.
 var Directives = []string{
-	"prometheus",
 	"bind",
 	"health",
 	"pprof",
 
+	"prometheus",
 	"errors",
 	"log",
 	"chaos",

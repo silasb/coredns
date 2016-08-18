@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os/exec"
@@ -16,12 +17,11 @@ import (
 
 // cd ../../mholt/caddy/caddy
 // ./build.bash
-func BuildCaddy(dir string) error {
-	// path.Join does not work when adding ./
+func BuildCaddy(dir string) ([]byte, error) {
+	// path.Join does not work when adding './'
 	bld := exec.Command("./" + build)
-	println(bld.Path)
 	bld.Dir = caddydir
-	return bld.Run()
+	return bld.CombinedOutput()
 }
 
 // cp ../../mholt/caddy/caddy/caddy coredns
@@ -42,8 +42,10 @@ const (
 )
 
 func main() {
-	if err := BuildCaddy(caddydir); err != nil {
+	if out, err := BuildCaddy(caddydir); err != nil {
+		fmt.Printf("\n%s\n", out)
 		log.Fatalf("failed to build caddy: %s", err)
+
 	}
 	if err := CopyCaddy(caddydir); err != nil {
 		log.Fatalf("failed to copy caddy to coredns: %s", err)
