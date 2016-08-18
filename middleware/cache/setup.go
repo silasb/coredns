@@ -39,6 +39,7 @@ func cacheParse(c *caddy.Controller) (int, []string, error) {
 	for c.Next() {
 		if c.Val() == "cache" {
 			// cache [ttl] [zones..]
+			origins = make([]string, len(c.ServerBlockKeys))
 			copy(origins, c.ServerBlockKeys)
 			args := c.RemainingArgs()
 			if len(args) > 0 {

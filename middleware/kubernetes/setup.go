@@ -52,6 +52,7 @@ func kubernetesParse(c *caddy.Controller) (Kubernetes, error) {
 			zones := c.RemainingArgs()
 
 			if len(zones) == 0 {
+				k8s.Zones = make([]string, len(c.ServerBlockKeys))
 				copy(k8s.Zones, c.ServerBlockKeys)
 			} else {
 				// Normalize requested zones

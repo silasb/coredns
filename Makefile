@@ -8,8 +8,10 @@ DOCKER_IMAGE_NAME := $$USER/coredns
 
 
 all:
-	go build $(BUILD_VERBOSE) -ldflags="-s -w"
+	go generate
 
+# TODO(miek)
+# TODO(miek): static caddy binary?
 .PHONY: docker
 docker: all
 	GOOS=linux go build -a -tags netgo -installsuffix netgo -ldflags="-s -w"

@@ -57,6 +57,7 @@ func fileParse(c *caddy.Controller) (Zones, error) {
 			}
 			fileName := c.Val()
 
+			origins = make([]string, len(c.ServerBlockKeys))
 			copy(origins, c.ServerBlockKeys)
 			args := c.RemainingArgs()
 			if len(args) > 0 {

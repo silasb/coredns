@@ -45,6 +45,7 @@ func prometheusParse(c *caddy.Controller) (Metrics, error) {
 		if len(met.ZoneNames) > 0 {
 			return Metrics{}, c.Err("metrics: can only have one metrics module per server")
 		}
+		met.ZoneNames = make([]string, len(c.ServerBlockKeys))
 		copy(met.ZoneNames, c.ServerBlockKeys)
 		for i, _ := range met.ZoneNames {
 			met.ZoneNames[i] = middleware.Host(met.ZoneNames[i]).Normalize()

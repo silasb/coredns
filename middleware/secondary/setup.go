@@ -50,6 +50,7 @@ func secondaryParse(c *caddy.Controller) (file.Zones, error) {
 	for c.Next() {
 		if c.Val() == "secondary" {
 			// secondary [origin]
+			origins = make([]string, len(c.ServerBlockKeys))
 			copy(origins, c.ServerBlockKeys)
 			args := c.RemainingArgs()
 			if len(args) > 0 {
