@@ -8,11 +8,11 @@ DOCKER_IMAGE_NAME := $$USER/coredns
 
 all:
 	go generate
-	GOOS=linux go build -a -tags netgo -installsuffix netgo -ldflags="-s -w"
+	go build $(BUILD_VERBOSE) -ldflags="-s -w
 
 .PHONY: docker
 docker: all
-	GOOS=linux go build -a -tags netgo -installsuffix netgo -ldflags="-s -w"
+	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w"
 	docker build -t $(DOCKER_IMAGE_NAME) .
 
 .PHONY: deps
