@@ -12,6 +12,7 @@ import (
 	_ "github.com/miekg/coredns/middleware/errors"
 	_ "github.com/miekg/coredns/middleware/log"
 	_ "github.com/miekg/coredns/middleware/metrics"
+	_ "github.com/miekg/coredns/middleware/rewrite"
 
 	_ "github.com/miekg/coredns/middleware/cache"
 	_ "github.com/miekg/coredns/middleware/chaos"
