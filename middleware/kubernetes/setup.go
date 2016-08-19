@@ -65,12 +65,11 @@ func kubernetesParse(c *caddy.Controller) (Kubernetes, error) {
 			if len(zones) == 0 {
 				k8s.Zones = make([]string, len(c.ServerBlockKeys))
 				copy(k8s.Zones, c.ServerBlockKeys)
-			} else {
-				// Normalize requested zones
-				k8s.Zones = NormalizeZoneList(zones)
 			}
 
+			k8s.Zones = NormalizeZoneList(zones)
 			middleware.Zones(k8s.Zones).FullyQualify()
+
 			if k8s.Zones == nil || len(k8s.Zones) < 1 {
 				err = errors.New("Zone name must be provided for kubernetes middleware.")
 				return Kubernetes{}, err

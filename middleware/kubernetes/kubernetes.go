@@ -144,7 +144,6 @@ func (g *Kubernetes) Records(name string, exact bool) ([]msg.Service, error) {
 	log.Printf("[debug] before g.Get(namespace, nsWildcard, serviceName, serviceWildcard): %v %v %v %v", namespace, nsWildcard, serviceName, serviceWildcard)
 	k8sItems, err := g.Get(namespace, nsWildcard, serviceName, serviceWildcard)
 	if err != nil {
-		log.Printf("[ERROR] Got error while looking up ServiceItems. Error is: %v\n", err)
 		return nil, err
 	}
 	if k8sItems == nil {

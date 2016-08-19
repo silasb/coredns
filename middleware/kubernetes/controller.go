@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -140,7 +139,6 @@ func (dns *dnsController) Stop() error {
 	// Only try draining the workqueue if we haven't already.
 	if !dns.shutdown {
 		close(dns.stopCh)
-		log.Println("shutting down controller queues")
 		dns.shutdown = true
 
 		return nil
@@ -151,14 +149,10 @@ func (dns *dnsController) Stop() error {
 
 // Run starts the controller.
 func (dns *dnsController) Run() {
-	log.Println("[debug] Starting k8s notification controllers")
-
 	go dns.endpController.Run(dns.stopCh)
 	go dns.svcController.Run(dns.stopCh)
 	go dns.nsController.Run(dns.stopCh)
-
 	<-dns.stopCh
-	log.Println("[debug] shutting down coredns controller")
 }
 
 func (dns *dnsController) GetNamespaceList() *api.NamespaceList {
@@ -203,12 +197,12 @@ func (dns *dnsController) GetServiceInNamespace(namespace string, servicename st
 	svcObj, svcExists, err := dns.svcLister.Store.GetByKey(svcKey)
 
 	if err != nil {
-		log.Printf("error getting service %v from the cache: %v\n", svcKey, err)
+		// TODO(...): should return err here
 		return nil
 	}
 
 	if !svcExists {
-		log.Printf("service %v does not exists\n", svcKey)
+		// TODO(...): should return err here
 		return nil
 	}
 
