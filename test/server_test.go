@@ -17,7 +17,7 @@ func TestProxyToChaosServer(t *testing.T) {
 		t.Fatalf("could not get CoreDNS serving instance: %s", err)
 	}
 
-	tcpChaos, udpChaos := CoreDNSServerPorts(chaos, 0)
+	udpChaos, tcpChaos := CoreDNSServerPorts(chaos, 0)
 	defer chaos.Stop()
 
 	corefileProxy := `.:0 {
