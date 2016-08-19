@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/miekg/coredns/middleware/kubernetes/k8stest"
+
 	"github.com/miekg/dns"
 )
 
