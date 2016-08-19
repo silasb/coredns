@@ -11,7 +11,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-func testLookupBalanceRewriteCacheDnssec(t *testing.T) {
+func TestLookupBalanceRewriteCacheDnssec(t *testing.T) {
 	name, rm, err := test.TempFile(t, ".", exampleOrg)
 	if err != nil {
 		t.Fatalf("failed to created zone: %s", err)

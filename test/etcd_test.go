@@ -35,7 +35,7 @@ func TestEtcdStubForwarding(t *testing.T) {
 	// TODO(miek)
 }
 
-func testEtcdStubAndProxyLookup(t *testing.T) {
+func TestEtcdStubAndProxyLookup(t *testing.T) {
 	corefile := `.:0 {
     etcd skydns.local {
         stubzones

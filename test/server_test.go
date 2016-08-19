@@ -7,7 +7,7 @@ import (
 )
 
 // Start 2 tests server, server A will proxy to B, server B is an CH server.
-func testProxyToChaosServer(t *testing.T) {
+func TestProxyToChaosServer(t *testing.T) {
 	corefile := `.:0 {
 	chaos CoreDNS-001 miek@miek.nl
 }
