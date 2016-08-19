@@ -71,7 +71,7 @@ Start a simple proxy:
 }
 ~~~
 
-Just start CoreDNS: `./coredns -type=dns`.
+Just start CoreDNS: `./coredns`.
 And then just query on that port (1053), the query should be forwarded to 8.8.8.8 and the response
 will be returned.
 
@@ -138,7 +138,7 @@ LimitNOFILE=8192
 User=coredns
 WorkingDirectory=/home/coredns
 ExecStartPre=/sbin/setcap cap_net_bind_service=+ep /opt/bin/coredns
-ExecStart=/opt/bin/coredns type=dns -pidfile /home/coredns/coredns.pid -conf=/etc/coredns
+ExecStart=/opt/bin/coredns -pidfile /home/coredns/coredns.pid -conf=/etc/coredns/Corefile
 ExecReload=/bin/kill -SIGUSR1 $MAINPID
 Restart=on-failure
 
