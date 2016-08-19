@@ -53,21 +53,14 @@ func UDPServer(t *testing.T, laddr string) (*dns.Server, string, error) {
 	return server, pc.LocalAddr().String(), nil
 }
 
-// CoreDNSServer returns a test server.
-// with Stop(). It just takes a normal Corefile as input.
-func CoreDNSServer(corefile string) (*caddy.Instance, error) {
-	cdyInput := NewInput(corefile)
-
-	return caddy.Start(cdyInput)
-}
+// CoreDNSServer returns a test server. It just takes a normal Corefile as input.
+func CoreDNSServer(corefile string) (*caddy.Instance, error) { return caddy.Start(NewInput(corefile)) }
 
 // CoreDNSSserverStop stops a server.
-func CoreDNSServerStop(i *caddy.Instance) {
-	i.Stop()
-}
+func CoreDNSServerStop(i *caddy.Instance) { i.Stop() }
 
 // CoreDNSServeRPorts returns the ports the instance is listening on. The integer k indicates
-// which ServerListener you need
+// which ServerListener you want.
 func CoreDNSServerPorts(i *caddy.Instance, k int) (udp, tcp string) {
 	srvs := i.Servers()
 	if len(srvs) < k+1 {
