@@ -143,10 +143,8 @@ func (g *Kubernetes) Records(name string, exact bool) ([]msg.Service, error) {
 		return nil, nil
 	}
 
-	log.Printf("before g.Get(namespace, nsWildcard, serviceName, serviceWildcard): %v %v %v %v", namespace, nsWildcard, serviceName, serviceWildcard)
 	k8sItems, err := g.Get(namespace, nsWildcard, serviceName, serviceWildcard)
 	if err != nil {
-		log.Printf("[ERROR] Got error while looking up ServiceItems. Error is: %v\n", err)
 		return nil, err
 	}
 	if k8sItems == nil {
@@ -184,13 +182,6 @@ func (g *Kubernetes) getRecordsForServiceItems(serviceItems []api.Service, value
 // Get performs the call to the Kubernetes http API.
 func (g *Kubernetes) Get(namespace string, nsWildcard bool, servicename string, serviceWildcard bool) ([]api.Service, error) {
 	serviceList := g.APIConn.GetServiceList()
-
-	/* TODO: Remove?
-	if err != nil {
-		log.Printf("[ERROR] Getting service list produced error: %v", err)
-		return nil, err
-	}
-	*/
 
 	var resultItems []api.Service
 
