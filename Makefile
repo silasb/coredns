@@ -1,37 +1,42 @@
 #BUILD_VERBOSE :=
 BUILD_VERBOSE := -v
 
-TEST_VERBOSE :=
+#TEST_VERBOSE :=
 TEST_VERBOSE := -v
 
 DOCKER_IMAGE_NAME := $$USER/coredns
 
-all:
-	go generate $(BUILD_VERBOSE)
+all: deps build
+
+build: 
 	go build $(BUILD_VERBOSE) -ldflags="-s -w"
 
 .PHONY: docker
-docker: all
+docker: deps
 	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w"
 	docker build -t $(DOCKER_IMAGE_NAME) .
 
 .PHONY: deps
 deps:
+	# Get caddy so we can generate into that codebase
+	# before getting all other dependencies.
+	go get ${BUILD_VERBOSE} github.com/mholt/caddy
+	go generate $(BUILD_VERSOSE)
 	go get ${BUILD_VERBOSE}
 
 .PHONY: test
-test:
+test: deps
 	go test $(TEST_VERBOSE) ./...
 
 .PHONY: testk8s
-testk8s:
+testk8s: deps
 	# With -args --v=100 the k8s API response data will be printed in the log:
 	#go test $(TEST_VERBOSE) -tags=k8s -run 'TestK8sIntegration' ./test -args --v=100
 	# Without the k8s API response data:
 	go test $(TEST_VERBOSE) -tags=k8s -run 'TestK8sIntegration' ./test
 
 .PHONY: testk8s-setup
-testk8s-setup:
+testk8s-setup: deps
 	go test -v ./middleware/kubernetes/... -run TestKubernetes
 
 .PHONY: clean
