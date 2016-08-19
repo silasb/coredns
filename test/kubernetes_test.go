@@ -68,7 +68,7 @@ func TestK8sIntegration(t *testing.T) {
 	testLookupSRV(t)
 }
 
-func TestLookupA(t *testing.T) {
+func testLookupA(t *testing.T) {
 	if !k8stest.CheckKubernetesRunning() {
 		t.Skip("Skipping Kubernetes Integration tests. Kubernetes is not running")
 	}
@@ -122,7 +122,7 @@ func TestLookupA(t *testing.T) {
 	}
 }
 
-func TestLookupSRV(t *testing.T) {
+func testLookupSRV(t *testing.T) {
 	if !k8stest.CheckKubernetesRunning() {
 		t.Skip("Skipping Kubernetes Integration tests. Kubernetes is not running")
 	}
