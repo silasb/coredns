@@ -12,7 +12,7 @@ import (
 	"k8s.io/kubernetes/pkg/client/cache"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/controller/framework"
-    "k8s.io/kubernetes/pkg/labels"
+	"k8s.io/kubernetes/pkg/labels"
 	"k8s.io/kubernetes/pkg/runtime"
 	"k8s.io/kubernetes/pkg/watch"
 )
@@ -24,7 +24,7 @@ var (
 type dnsController struct {
 	client *client.Client
 
-    selector *labels.Selector
+	selector *labels.Selector
 
 	endpController *framework.Controller
 	svcController  *framework.Controller
@@ -45,9 +45,9 @@ type dnsController struct {
 // newDNSController creates a controller for coredns
 func newdnsController(kubeClient *client.Client, resyncPeriod time.Duration, lselector *labels.Selector) *dnsController {
 	dns := dnsController{
-		client: kubeClient,
-        selector: lselector,
-		stopCh: make(chan struct{}),
+		client:   kubeClient,
+		selector: lselector,
+		stopCh:   make(chan struct{}),
 	}
 
 	dns.endpLister.Store, dns.endpController = framework.NewInformer(
@@ -76,54 +76,54 @@ func newdnsController(kubeClient *client.Client, resyncPeriod time.Duration, lse
 
 func serviceListFunc(c *client.Client, ns string, s *labels.Selector) func(api.ListOptions) (runtime.Object, error) {
 	return func(opts api.ListOptions) (runtime.Object, error) {
-        if s != nil {
-            opts.LabelSelector = *s
-        }
+		if s != nil {
+			opts.LabelSelector = *s
+		}
 		return c.Services(ns).List(opts)
 	}
 }
 
 func serviceWatchFunc(c *client.Client, ns string, s *labels.Selector) func(options api.ListOptions) (watch.Interface, error) {
 	return func(options api.ListOptions) (watch.Interface, error) {
-        if s != nil {
-            options.LabelSelector = *s
-        }
+		if s != nil {
+			options.LabelSelector = *s
+		}
 		return c.Services(ns).Watch(options)
 	}
 }
 
 func endpointsListFunc(c *client.Client, ns string, s *labels.Selector) func(api.ListOptions) (runtime.Object, error) {
 	return func(opts api.ListOptions) (runtime.Object, error) {
-        if s != nil {
-            opts.LabelSelector = *s
-        }
+		if s != nil {
+			opts.LabelSelector = *s
+		}
 		return c.Endpoints(ns).List(opts)
 	}
 }
 
 func endpointsWatchFunc(c *client.Client, ns string, s *labels.Selector) func(options api.ListOptions) (watch.Interface, error) {
 	return func(options api.ListOptions) (watch.Interface, error) {
-        if s != nil {
-            options.LabelSelector = *s
-        }
+		if s != nil {
+			options.LabelSelector = *s
+		}
 		return c.Endpoints(ns).Watch(options)
 	}
 }
 
 func namespaceListFunc(c *client.Client, s *labels.Selector) func(api.ListOptions) (runtime.Object, error) {
 	return func(opts api.ListOptions) (runtime.Object, error) {
-        if s != nil {
-            opts.LabelSelector = *s
-        }
+		if s != nil {
+			opts.LabelSelector = *s
+		}
 		return c.Namespaces().List(opts)
 	}
 }
 
 func namespaceWatchFunc(c *client.Client, s *labels.Selector) func(options api.ListOptions) (watch.Interface, error) {
 	return func(options api.ListOptions) (watch.Interface, error) {
-        if s != nil {
-            options.LabelSelector = *s
-        }
+		if s != nil {
+			options.LabelSelector = *s
+		}
 		return c.Namespaces().Watch(options)
 	}
 }
