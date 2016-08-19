@@ -1,5 +1,5 @@
 # Serve on port 53
-.:1053 {
+.:53 {
     # use kubernetes middleware for domain "coredns.local"
     kubernetes coredns.local {
 		# Kubernetes data API resync period
