@@ -27,7 +27,20 @@ func setup(c *caddy.Controller) error {
 		return err
 	}
 
-	c.OnStartup(kubernetes.StartKubeCache)
+	err = kubernetes.InitKubeCache()
+	if err != nil {
+		return err
+	}
+
+	// Register KubeCache start and stop functions with Caddy
+	c.OnStartup(func() error {
+		go kubernetes.APIConn.Run()
+		return nil
+	})
+
+	c.OnShutdown(func() error {
+		return kubernetes.APIConn.Stop()
+	})
 
 	dnsserver.GetConfig(c).AddMiddleware(func(next dnsserver.Handler) dnsserver.Handler {
 		kubernetes.Next = next
@@ -44,8 +57,6 @@ func kubernetesParse(c *caddy.Controller) (Kubernetes, error) {
 	k8s := Kubernetes{ResyncPeriod: defaultResyncPeriod}
 	k8s.NameTemplate = new(nametemplate.NameTemplate)
 	k8s.NameTemplate.SetTemplate(template)
-
-	// TODO: expose resync period in Corefile
 
 	for c.Next() {
 		if c.Val() == "kubernetes" {

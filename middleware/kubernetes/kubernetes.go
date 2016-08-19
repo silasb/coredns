@@ -35,7 +35,7 @@ type Kubernetes struct {
 	Selector      *labels.Selector
 }
 
-func (g *Kubernetes) StartKubeCache() error {
+func (g *Kubernetes) InitKubeCache() error {
 	// For a custom api server or running outside a k8s cluster
 	// set URL in env.KUBERNETES_MASTER or set endpoint in Corefile
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
@@ -67,8 +67,6 @@ func (g *Kubernetes) StartKubeCache() error {
 		log.Printf("[INFO] Kubernetes middleware configured with the label selector '%s'. Only kubernetes objects matching this label selector will be exposed.", unversionedapi.FormatLabelSelector(g.LabelSelector))
 	}
 	g.APIConn = newdnsController(kubeClient, g.ResyncPeriod, g.Selector)
-
-	go g.APIConn.Run()
 
 	return err
 }
@@ -143,6 +141,7 @@ func (g *Kubernetes) Records(name string, exact bool) ([]msg.Service, error) {
 		return nil, nil
 	}
 
+	log.Printf("[debug] before g.Get(namespace, nsWildcard, serviceName, serviceWildcard): %v %v %v %v", namespace, nsWildcard, serviceName, serviceWildcard)
 	k8sItems, err := g.Get(namespace, nsWildcard, serviceName, serviceWildcard)
 	if err != nil {
 		return nil, err
