@@ -83,10 +83,14 @@ func testLookupA(t *testing.T) {
 
 	server, err := CoreDNSServer(corefile)
 	if err != nil {
-		t.Fatalf("Could get server: %s", err)
+		t.Fatalf("could not get CoreDNS serving instance: %s", err)
 	}
-	_, udp := StartCoreDNSServer(server[0])
-	defer StopCoreDNSServer(server[0])
+
+	udp, _ := CoreDNSServerPorts(server, 0)
+	if udp == "" {
+		t.Fatalf("could not get udp listening port")
+	}
+	defer server.Stop()
 
 	log.SetOutput(ioutil.Discard)
 
@@ -133,10 +137,13 @@ func testLookupSRV(t *testing.T) {
 
 	server, err := CoreDNSServer(corefile)
 	if err != nil {
-		t.Fatalf("Could get server: %s", err)
+		t.Fatalf("could not get CoreDNS serving instance: %s", err)
 	}
-	_, udp := StartCoreDNSServer(server[0])
-	defer StopCoreDNSServer(server[0])
+	udp, _ := CoreDNSServerPorts(server, 0)
+	if udp == "" {
+		t.Fatalf("could not get udp listening port")
+	}
+	defer server.Stop()
 
 	log.SetOutput(ioutil.Discard)
 

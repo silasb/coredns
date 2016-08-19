@@ -31,11 +31,11 @@ func testLookupBalanceRewriteCacheDnssec(t *testing.T) {
 `
 	ex, err := CoreDNSServer(corefile)
 	if err != nil {
-		t.Errorf("Could get server to start: %s", err)
-		return
+		t.Fatalf("could not get CoreDNS serving instance: %s", err)
 	}
-	_, udp := StartCoreDNSServer(ex[0])
-	defer StopCoreDNSServer(ex[0])
+
+	udp, _ := CoreDNSServerPorts(ex, 0)
+	defer ex.Stop()
 
 	log.SetOutput(ioutil.Discard)
 	c := new(dns.Client)

@@ -24,12 +24,13 @@ func benchmarkLookupBalanceRewriteCache(b *testing.B) {
     loadbalance
 }
 `
+
 	ex, err := CoreDNSServer(corefile)
 	if err != nil {
-		t.Fatalf("Could get server: %s", err)
+		t.Fatalf("could not get CoreDNS serving instance: %s", err)
 	}
-	_, udp := StartCoreDNSServer(ex[0])
-	defer StopCoreDNSServer(ex[0])
+	udp, _ := CoreDNSServerPorts(ex, 0)
+	defer ex.Stop()
 
 	log.SetOutput(ioutil.Discard)
 	c := new(dns.Client)

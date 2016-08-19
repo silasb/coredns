@@ -2,16 +2,14 @@ package test
 
 import (
 	"net"
-	"strings"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/miekg/coredns/core/dnsserver"
-	"github.com/miekg/dns"
+	_ "github.com/miekg/coredns/core"
 
 	"github.com/mholt/caddy"
-	"github.com/mholt/caddy/caddyfile"
+	"github.com/miekg/dns"
 )
 
 func TCPServer(t *testing.T, laddr string) (*dns.Server, string, error) {
@@ -56,41 +54,45 @@ func UDPServer(t *testing.T, laddr string) (*dns.Server, string, error) {
 }
 
 // CoreDNSServer returns a test server.
-// The ports can be retreived with server.LocalAddr(). The testserver itself can be stopped
 // with Stop(). It just takes a normal Corefile as input.
-func CoreDNSServer(corefile string) ([]caddy.Server, error) {
+func CoreDNSServer(corefile string) (*caddy.Instance, error) {
+	cdyInput := NewInput(corefile)
 
-	serverBlocks, err := caddyfile.Parse("testCorefile", strings.NewReader(corefile), dnsserver.Directives)
-	if err != nil {
-		return nil, err
+	return caddy.Start(cdyInput)
+}
+
+// CoreDNSSserverStop stops a server.
+func CoreDNSServerStop(i *caddy.Instance) {
+	i.Stop()
+}
+
+// CoreDNSServeRPorts returns the ports the instance is listening on. The integer k indicates
+// which ServerListener you need
+func CoreDNSServerPorts(i *caddy.Instance, k int) (udp, tcp string) {
+	srvs := i.Servers()
+	if len(srvs) < k+1 {
+		return "", ""
 	}
+	u := srvs[k].LocalAddr()
+	t := srvs[k].Addr()
 
-	h := dnsserver.TestNewContext()
-	serverBlocks, err = h.InspectServerBlocks("testCoreFile", serverBlocks)
-	if err != nil {
-		return nil, err
+	if u != nil {
+		udp = u.String()
 	}
-
-	s, err := h.MakeServers()
-
-	return s, err
+	if t != nil {
+		tcp = t.String()
+	}
+	return
 }
 
-// StartCoreDNSserver starts a server and return the udp and tcp listen addresses.
-func StartCoreDNSServer(srv caddy.Server) (tcp, udp string) {
-	go func() { l, _ := srv.Listen(); srv.Serve(l) }()
-	go func() { p, _ := srv.ListenPacket(); srv.ServePacket(p) }()
-
-	// TODO(miek): proper wait on the thing.
-	time.Sleep(1 * time.Second) // I regret nothing!
-
-	t := srv.(*dnsserver.Server).LocalAddr()
-	u := srv.(*dnsserver.Server).LocalAddrPacket()
-
-	return t.String(), u.String()
+type Input struct {
+	corefile []byte
 }
 
-// StopCoreDNSSserver stops a server.
-func StopCoreDNSServer(srv caddy.Server) {
-	srv.(*dnsserver.Server).Stop()
+func NewInput(corefile string) *Input {
+	return &Input{corefile: []byte(corefile)}
 }
+
+func (i *Input) Body() []byte       { return i.corefile }
+func (i *Input) Path() string       { return "Corefile" }
+func (i *Input) ServerType() string { return "dns" }

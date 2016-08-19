@@ -20,7 +20,7 @@ example.org.		IN	A	127.0.0.1
 example.org.		IN	A	127.0.0.2
 `
 
-func testLookupProxy(t *testing.T) {
+func TestLookupProxy(t *testing.T) {
 	name, rm, err := test.TempFile(t, ".", exampleOrg)
 	if err != nil {
 		t.Fatalf("failed to created zone: %s", err)
@@ -28,15 +28,20 @@ func testLookupProxy(t *testing.T) {
 	defer rm()
 
 	corefile := `example.org:0 {
-	file ` + name + `
+       file ` + name + `
 }
 `
-	ex, err := CoreDNSServer(corefile)
+
+	i, err := CoreDNSServer(corefile)
 	if err != nil {
-		t.Fatalf("Could get server: %s", err)
+		t.Fatalf("could not get CoreDNS serving instance: %s", err)
 	}
-	_, udp := StartCoreDNSServer(ex[0])
-	defer StopCoreDNSServer(ex[0])
+
+	udp, _ := CoreDNSServerPorts(i, 0)
+	if udp == "" {
+		t.Fatalf("could not get udp listening port")
+	}
+	defer i.Stop()
 
 	log.SetOutput(ioutil.Discard)
 
