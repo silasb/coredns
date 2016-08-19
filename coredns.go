@@ -9,6 +9,7 @@ import (
 //go:generate go run plugin_generate.go
 func main() {
 	flag.Set("type", "dns")
+	flag.Set("conf", "Corefile")
 
 	caddymain.Run()
 }
