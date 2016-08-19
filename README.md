@@ -49,15 +49,22 @@ Caddyfile when I forked it).
 
 ## Compilation
 
+CoreDNS (as a servertype plugin for Caddy) has a hard dependency on Caddy - this is *almost* like
+the normal Go dependencies, but with a small twist, caddy (the source) need to know that CoreDNS
+exists and for this we need to add 1 line `_ "github.com/miekg/coredns/core"` to file in caddy.
+
 You have the source of CoreDNS, this should preferably be downloaded under your `$GOPATH`. Get all
 dependencies:
 
     go get ./...
 
-Then, execute `go generate`, this will patch Caddy to add CoreDNS.
+Then, execute `go generate`, this will patch Caddy to add CoreDNS, and then `go build` as you would
+normally do:
 
     go generate
     go build
+
+Should yield a `coredns` binary.
 
 ## Examples
 
