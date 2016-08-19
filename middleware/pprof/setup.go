@@ -32,7 +32,6 @@ func setup(c *caddy.Controller) error {
 	pprofOnce.Do(func() {
 		c.OnStartup(handler.Startup)
 		c.OnShutdown(handler.Shutdown)
-		c.OnRestart(handler.Shutdown)
 	})
 
 	return nil
