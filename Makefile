@@ -7,7 +7,7 @@ TEST_VERBOSE := -v
 DOCKER_IMAGE_NAME := $$USER/coredns
 
 all:
-	go generate
+	go generate $(BUILD_VERBOSE)
 	go build $(BUILD_VERBOSE) -ldflags="-s -w"
 
 .PHONY: docker
@@ -32,8 +32,19 @@ testk8s:
 
 .PHONY: testk8s-setup
 testk8s-setup:
-	go test -v ./core/setup -run TestKubernetes
+	go test -v ./middleware/kubernetes/... -run TestKubernetes
 
 .PHONY: clean
 clean:
 	go clean
+	rm -f coredns
+
+.PHONY: distclean
+distclean: clean
+	# Clean all dependencies and build artifacts
+	find $(GOPATH)/pkg -maxdepth 1 -mindepth 1 | xargs rm -rf
+	find $(GOPATH)/bin -maxdepth 1 -mindepth 1 | xargs rm -rf
+	
+	find $(GOPATH)/src -maxdepth 1 -mindepth 1 | grep -v github | xargs rm -rf
+	find $(GOPATH)/src -maxdepth 2 -mindepth 2 | grep -v miekg | xargs rm -rf
+	find $(GOPATH)/src/github.com/miekg -maxdepth 1 -mindepth 1 \! -name \*coredns\* | xargs rm -rf
