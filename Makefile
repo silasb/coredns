@@ -6,9 +6,12 @@ TEST_VERBOSE := -v
 
 DOCKER_IMAGE_NAME := $$USER/coredns
 
-all: deps build
+all: coredns
 
-build: 
+# Phony this to ensure we always build the binary.
+# TODO: Add .go file dependencies.
+.PHONY: coredns
+coredns: generate deps
 	go build $(BUILD_VERBOSE) -ldflags="-s -w"
 
 .PHONY: docker
@@ -16,12 +19,17 @@ docker: deps
 	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w"
 	docker build -t $(DOCKER_IMAGE_NAME) .
 
-.PHONY: deps
-deps:
+../../mholt/caddy:
 	# Get caddy so we can generate into that codebase
 	# before getting all other dependencies.
 	go get ${BUILD_VERBOSE} github.com/mholt/caddy
+
+.PHONY: generate
+generate: ../../mholt/caddy
 	go generate $(BUILD_VERSOSE)
+
+.PHONY: deps
+deps: generate
 	go get ${BUILD_VERBOSE}
 
 .PHONY: test
