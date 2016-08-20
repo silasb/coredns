@@ -8,6 +8,7 @@ import (
 )
 
 //go:generate go run plugin_generate.go
+
 func main() {
 	// Set some flags/options specific for CoreDNS.
 	flag.Set("type", "dns")
