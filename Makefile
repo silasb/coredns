@@ -33,6 +33,13 @@ generate: ../../mholt/caddy
 deps: generate
 	go get ${BUILD_VERBOSE}
 
+# release releases CoreDNS (via github). It will extract the version (which should already
+# be incremented), tags the repo, builds binaries, uploads to github and creates a small
+# changelog.
+# awk ' /coreVersion/ { gsub(/\"/,"",$3); printf "%s\n", $3 } ' < coremain/version.go
+.PHONY: release
+	echo "todo"
+
 .PHONY: test
 test: deps
 	go test $(TEST_VERBOSE) ./...
@@ -58,7 +65,7 @@ distclean: clean
 	# Clean all dependencies and build artifacts
 	find $(GOPATH)/pkg -maxdepth 1 -mindepth 1 | xargs rm -rf
 	find $(GOPATH)/bin -maxdepth 1 -mindepth 1 | xargs rm -rf
-	
+
 	find $(GOPATH)/src -maxdepth 1 -mindepth 1 | grep -v github | xargs rm -rf
 	find $(GOPATH)/src -maxdepth 2 -mindepth 2 | grep -v miekg | xargs rm -rf
 	find $(GOPATH)/src/github.com/miekg -maxdepth 1 -mindepth 1 \! -name \*coredns\* | xargs rm -rf
