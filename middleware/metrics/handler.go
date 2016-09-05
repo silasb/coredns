@@ -68,6 +68,10 @@ func Report(state middleware.State, zone, rcode string, size int, start time.Tim
 	responseRcode.WithLabelValues(zone, rcode).Inc()
 }
 
+func reportVersion() {
+	// stuff. caddy.Version caddy.AppName?
+}
+
 var monitorType = map[uint16]bool{
 	dns.TypeAAAA:   true,
 	dns.TypeA:      true,
