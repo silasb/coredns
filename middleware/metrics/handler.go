@@ -69,6 +69,8 @@ func Report(state middleware.State, zone, rcode string, size int, start time.Tim
 }
 
 func reportVersion() {
+	// branch, revision, version
+	buildInfo.WithLabelValues("", "", "001").Set(1)
 	// stuff. caddy.Version caddy.AppName?
 }
 

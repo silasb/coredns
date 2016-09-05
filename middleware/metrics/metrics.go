@@ -23,7 +23,7 @@ var (
 	responseTransferSize *prometheus.HistogramVec
 	responseRcode        *prometheus.CounterVec
 
-	buildInfo prometheus.Counter
+	buildInfo *prometheus.CounterVec
 )
 
 // Metrics holds the prometheus configuration. The metrics' path is fixed to be /metrics
@@ -149,12 +149,12 @@ func define() {
 		Help:      "Counter of response status codes.",
 	}, []string{"zone", "rcode"})
 
-	buildInfo = prometheus.NewCounter(prometheus.CounterOpts{
+	buildInfo = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: middleware.Namespace,
-		Subsystem: build,
+		Subsystem: "build",
 		Name:      "info",
 		Help:      "Version and build info.",
-	}, []string{"branch", "revision", "goversion", "version"})
+	}, []string{"branch", "revision", "version"})
 }
 
 const (
