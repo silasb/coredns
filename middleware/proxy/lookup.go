@@ -52,9 +52,11 @@ func New(hosts []string) Proxy {
 	return p
 }
 
-// Lookup will use name and type to forge a new message and will send that upstream. It will
+// Lookup will use name and type to forge a *new* message and will send that upstream. It will
 // set any EDNS0 options correctly so that downstream will be able to process the reply.
-// Lookup is not suitable for forwarding request. Ssee for that.
+// The main use of Lookup is to correctly resolve names that are outside "our" namespace and
+// need external resolving.
+// Lookup is not suitable for forwarding request. See Forward for that.
 func (p Proxy) Lookup(state request.Request, name string, tpe uint16) (*dns.Msg, error) {
 	req := new(dns.Msg)
 	req.SetQuestion(name, tpe)
